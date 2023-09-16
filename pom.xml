@@ -4,7 +4,7 @@
 
     <groupId>org.benbroadaway.unifi</groupId>
     <artifactId>unifi-parent</artifactId>
-    <version>0.0.4</version>
+    <version>0.0.5-SNAPSHOT</version>
     <packaging>pom</packaging>
     <modules>
         <module>unifi-api</module>
@@ -51,7 +51,7 @@
 
     <scm>
         <developerConnection>scm:git:https://localhost/does-not-exist</developerConnection>
-        <tag>0.0.4</tag>
+        <tag>0.0.2</tag>
     </scm>
 
     <developers>
