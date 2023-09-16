@@ -1,6 +1,8 @@
 package org.benbroadaway.unifi.cli;
 
 import org.benbroadaway.unifi.actions.usp.RelayState;
+import org.benbroadaway.unifi.actions.usp.RelayStateToggle;
+import org.benbroadaway.unifi.cli.completion.BooleanCandidates;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -18,17 +20,21 @@ public class UspState implements Callable<Integer> {
     private CommandSpec spec;
 
     @ParentCommand
-    private Device parent;
-
-    @Option(names = {"-h", "--help"}, usageHelp = true, description = "display the command's help message")
     @SuppressWarnings("unused")
-    boolean helpRequested = false;
+    private Device parent;
 
     @Option(names = {"-d", "--device-name"}, description = "USP device name to act upon")
     String deviceName;
 
     @Override
     public Integer call() {
+        log.warn("sub-command is missing");
+
+        return 1;
+    }
+
+    @Command(name = "get", description = "Get current USP relay state")
+    void getState() {
         var credentials = parent.getCredentials();
         var relayStateToggle = RelayState.get(parent.unifiHost, deviceName, credentials, parent.validateCerts);
 
@@ -40,7 +46,25 @@ public class UspState implements Callable<Integer> {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
 
-        return 0;
+    @Command(name = "set", description = "Set USP relay state")
+    void setState(@Option(names = {"--relay-state"},
+                          arity = "1",
+                          description = "USP device plug state. Candidates: ${COMPLETION-CANDIDATES}",
+                          completionCandidates = BooleanCandidates.class)
+                  boolean relayState) {
+        log.info("unifi-host: {}", parent.unifiHost);
+        log.info("toggling device: {}", deviceName);
+        log.info("rawRelayState: {}", relayState);
+
+        var credentials = parent.getCredentials();
+        var relayStateToggle = RelayStateToggle.get(parent.unifiHost, deviceName, credentials, parent.validateCerts, relayState);
+
+        try {
+            relayStateToggle.call();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 }
