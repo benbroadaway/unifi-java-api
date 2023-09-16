@@ -47,7 +47,7 @@ public class UnifiTask implements Task {
         RelayStateToggle relayStateToggle = RelayStateToggle.get(params.unifiHost(),
                 params.uspName(), getCredentials(params), params.validateCerts(), params.relayState());
 
-        UnifiResult result = relayStateToggle.call();
+        UnifiResult<Void> result = relayStateToggle.call();
 
         if (!result.ok()) {
             return TaskResult.fail(new IllegalStateException("Failed to set state: " + result.error()));

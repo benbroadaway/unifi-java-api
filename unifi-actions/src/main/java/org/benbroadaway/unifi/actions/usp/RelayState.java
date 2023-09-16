@@ -1,10 +1,7 @@
 package org.benbroadaway.unifi.actions.usp;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import org.benbroadaway.unifi.Device;
-import org.benbroadaway.unifi.ImmutableDevice;
-import org.benbroadaway.unifi.ImmutableOutletOverride;
 import org.benbroadaway.unifi.OutletOverride;
 import org.benbroadaway.unifi.actions.ApiResponse;
 import org.benbroadaway.unifi.actions.UnifiHttpClient;
@@ -18,57 +15,34 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.nio.charset.StandardCharsets;
 import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.Callable;
 
-public class RelayStateToggle implements Callable<UnifiResult<Void>> {
-    private static final Logger log = LoggerFactory.getLogger(RelayStateToggle.class);
+public class RelayState implements Callable<UnifiResult<Boolean>> {
+    private static final Logger log = LoggerFactory.getLogger(RelayState.class);
 
     private final String plugName;
-    private final boolean relayState;
     private final UnifiHttpClient unifiClient;
 
-    public static RelayStateToggle get(String unifiHost, String plugName, ApiCredentials unifiCreds, boolean validateCerts, boolean relayState) {
-        return new RelayStateToggle(unifiHost, plugName, unifiCreds, validateCerts, relayState);
+    public static RelayState get(String unifiHost, String plugName, ApiCredentials unifiCreds, boolean validateCerts) {
+        return new RelayState(unifiHost, plugName, unifiCreds, validateCerts);
     }
 
-    public RelayStateToggle(String unifiHost, String plugName, ApiCredentials unifiCreds, boolean validateCerts, boolean relayState) {
+    public RelayState(String unifiHost, String plugName, ApiCredentials unifiCreds, boolean validateCerts) {
         this.plugName = plugName;
-        this.relayState = relayState;
         this.unifiClient = new UnifiHttpClient(unifiHost, unifiCreds, validateCerts);
     }
 
     @Override
-    public UnifiResult<Void> call() {
+    public UnifiResult<Boolean> call() throws Exception {
         var currentDevice = getCurrentDevice();
         var relayIndex = 1;
         var currentState = getOutletRelayState(currentDevice, relayIndex); // TODO handle multi-outlet devices
-        if (currentState == relayState) {
-            log.info("Current state matches desired state.");
-            return UnifiResult.success();
-        }
 
-        var deviceId = currentDevice.deviceId()
-                .orElseThrow(() -> new IllegalStateException("no device_id found"));
-        var outletOverrides = currentDevice.outletOverrides().stream()
-                // outlet indices are 1-based
-                .map(oo -> oo.index() != relayIndex ? oo : ImmutableOutletOverride.builder()
-                        .from(oo)
-                        .relayState(relayState)
-                        .build())
-                .toList();
-
-        var desiredState = ImmutableDevice.builder()
-                .from(currentDevice)
-                .outletOverrides(outletOverrides)
-                .deviceId(Optional.empty())
+        return UnifiResult.<Boolean>builder()
+                .ok(true)
+                .data(currentState)
                 .build();
-
-        updateDevice(desiredState, deviceId);
-
-        return UnifiResult.success();
     }
 
     private boolean getOutletRelayState(Device device, int outlet) {
@@ -77,36 +51,6 @@ public class RelayStateToggle implements Callable<UnifiResult<Void>> {
                 .map(OutletOverride::relayState)
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("No outlet number: " + outlet));
-    }
-
-    private void updateDevice(Device device, String deviceId) {
-        var uri = unifiClient.resolve("/proxy/network/api/s/default/rest/device/" + deviceId);
-
-        unifiClient.withClient((client, csrfHeader) -> {
-            var req = HttpRequest.newBuilder()
-                    .uri(uri)
-                    .header("Content-Type", UnifiHttpClient.APPLICATION_JSON)
-                    .header("Accept", UnifiHttpClient.APPLICATION_JSON)
-                    .header("x-csrf-token", csrfHeader)
-                    .PUT(HttpRequest.BodyPublishers.ofString(serializeBody(device), StandardCharsets.UTF_8))
-                    .build();
-
-            try {
-                client.send(req, HttpResponse.BodyHandlers.ofString());
-            } catch (Exception e) {
-                throw new RuntimeException("Error sending device state: " + e.getMessage());
-            }
-
-            return null;
-        });
-    }
-
-    private static String serializeBody(Object o) {
-        try {
-            return Util.getMapper().writeValueAsString(o);
-        } catch (JsonProcessingException e) {
-            throw new RuntimeException("Error serializing JSON body: " + e.getMessage());
-        }
     }
 
     private Device getCurrentDevice() {
@@ -140,7 +84,6 @@ public class RelayStateToggle implements Callable<UnifiResult<Void>> {
             }
         });
     }
-
     private <T> ApiResponse<T> readBody(HttpResponse<InputStream> resp, JavaType returnParam) {
         try (var input = resp.body()) {
             return Util.withMapper(mapper -> {
@@ -151,4 +94,5 @@ public class RelayStateToggle implements Callable<UnifiResult<Void>> {
             throw new RuntimeException(e);
         }
     }
+
 }

@@ -17,8 +17,8 @@ import static picocli.CommandLine.*;
 
 @Command(name = "device",
         description = "Interact with Unifi devices",
-        subcommands = UspToggle.class)
-public class Device implements Callable<UnifiResult> {
+        subcommands = { UspState.class, UspToggle.class })
+public class Device implements Callable<UnifiResult<Void>> {
     private static final Logger log = LoggerFactory.getLogger(Device.class);
     @Option(names = {"-u", "--unifi-host"}, description = "Unifi controller URL")
     String unifiHost = "https://192.168.1.1";
@@ -26,8 +26,8 @@ public class Device implements Callable<UnifiResult> {
     @Option(names = {"--validate-certs"}, description = "Validate certificates")
     Boolean validateCerts = true;
 
-    @Option(names = {"--credential-var"},
-            description = "Specific environment variable holding admin credentials formatted as <username>:<password>")
+    @Option(names = {"--credentials-var"},
+            description = "Specify environment variable holding admin credentials formatted as <username>:<password>")
     String credentialVar = "UNIFI_CREDENTIALS";
 
     @Option(names = {"--credentials-file"},
@@ -36,7 +36,7 @@ public class Device implements Callable<UnifiResult> {
             .resolve(".unifi/auth/default.json");
 
     @Override
-    public UnifiResult call() {
+    public UnifiResult<Void> call() {
         return UnifiResult.success();
     }
 
