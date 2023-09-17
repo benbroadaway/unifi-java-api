@@ -11,4 +11,8 @@ import java.util.Map;
 public interface ApiResponse<T> {
     T data();
     Map<String, Object> meta(); // TODO refine
+
+    static <T> ImmutableApiResponse.Builder<T> builder() {
+        return ImmutableApiResponse.builder();
+    }
 }

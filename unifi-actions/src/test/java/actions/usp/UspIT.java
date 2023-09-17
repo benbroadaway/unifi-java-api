@@ -1,6 +1,6 @@
 package actions.usp;
 
-import org.benbroadaway.unifi.actions.usp.RelayStateToggle;
+import org.benbroadaway.unifi.actions.usp.SetRelayState;
 import org.benbroadaway.unifi.client.ImmutableApiCredentials;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Disabled;
@@ -21,7 +21,7 @@ class UspIT {
                 .password(assertEnv("TEST_UNIFI_PASSWORD").toCharArray())
                 .build();
 
-        var setState = RelayStateToggle.get(assertEnv("TEST_UNIFI_HOST"), assertEnv("TEST_UNIFI_DEVICE"), creds, true, true);
+        var setState = SetRelayState.getInstance(assertEnv("TEST_UNIFI_HOST"), assertEnv("TEST_UNIFI_DEVICE"), creds, true, true);
 
         // --- execute
 

@@ -1,5 +1,6 @@
 package org.benbroadaway.unifi.cli;
 
+import picocli.CommandLine;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
@@ -11,7 +12,9 @@ public class App implements Runnable {
     @SuppressWarnings("unused")
     private CommandSpec spec;
 
-    @Option(names = {"-h", "--help"}, usageHelp = true, description = "display a help message")
+    @Option(names = {"-h", "--help"}, usageHelp = true, scope = CommandLine.ScopeType.INHERIT,
+            description = "display the command's help message")
+    @SuppressWarnings("unused")
     boolean helpRequested = false;
 
     @Option(names = {"--version"}, description = "display version")

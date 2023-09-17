@@ -24,7 +24,7 @@ public class Util {
     }
 
     @FunctionalInterface
-    public static interface MapperFunction<T> {
+    public interface MapperFunction<T> {
         T apply(ObjectMapper mapper) throws IOException;
     }
 }

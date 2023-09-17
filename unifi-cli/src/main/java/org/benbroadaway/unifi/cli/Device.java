@@ -1,7 +1,8 @@
 package org.benbroadaway.unifi.cli;
 
-import org.benbroadaway.unifi.actions.UnifiResult;
 import org.benbroadaway.unifi.actions.Util;
+import org.benbroadaway.unifi.cli.completion.BooleanCandidates;
+import org.benbroadaway.unifi.cli.mixins.CLIAuth;
 import org.benbroadaway.unifi.client.ApiCredentials;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,55 +13,60 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.function.Supplier;
 
 import static picocli.CommandLine.*;
 
 @Command(name = "device",
         description = "Interact with Unifi devices",
-        subcommands = { UspState.class, UspToggle.class })
-public class Device implements Callable<UnifiResult<Void>> {
+        subcommands = { UspState.class })
+public class Device implements Callable<Integer> {
     private static final Logger log = LoggerFactory.getLogger(Device.class);
-    @Option(names = {"-u", "--unifi-host"}, description = "Unifi controller URL")
+    @Spec
+    @SuppressWarnings("unused")
+    private Model.CommandSpec spec;
+
+    @Option(names = {"-c", "--unifi-controller"},
+            scope = ScopeType.INHERIT,
+            description = "Unifi controller URL")
     String unifiHost = "https://192.168.1.1";
 
-    @Option(names = {"--validate-certs"}, description = "Validate certificates")
+    @Option(names = {"--validate-certs"},
+            scope = ScopeType.INHERIT,
+            arity = "1",
+            completionCandidates = BooleanCandidates.class,
+            description = "Validate certificates. Candidates: ${COMPLETION-CANDIDATES}")
     Boolean validateCerts = true;
 
     @Option(names = {"--credentials-var"},
+            scope = ScopeType.INHERIT,
             description = "Specify environment variable holding admin credentials formatted as <username>:<password>")
     String credentialVar = "UNIFI_CREDENTIALS";
 
-    @Option(names = {"--credentials-file"},
+    @Option(names = {"--credentials-file"}, scope = ScopeType.INHERIT,
             description = "Credentials file with username/password in JSON format")
     Path credentialsFile = Paths.get(System.getProperty("user.home"))
             .resolve(".unifi/auth/default.json");
 
     @Override
-    public UnifiResult<Void> call() {
-        return UnifiResult.success();
+    public Integer call() {
+        log.warn("sub-command is missing");
+
+        return 1;
     }
 
-    @ArgGroup(exclusive = false)
-    CliCredentials cliCredentials;
-
-    static class CliCredentials {
-        @Option(names = {"--username"}, arity = "0..1", interactive = true, required = true,
-                description = "Optional, prompts for username")
-        String username;
-        @Option(names = {"--password"}, arity = "0..1", interactive = true, required = true,
-                description = "Optional, prompts for password")
-        char[] password;
-    }
-
-    public ApiCredentials getCredentials() {
-        return getCliCredentials()
+    public ApiCredentials getCredentials(CLIAuth cliAuth, Supplier<Model.CommandSpec> specSupplier) {
+        return cliAuth.getCliCredentials()
                 .or(this::getEnvCredentials)
                 .or(this::getFileCredentials)
-                .orElseThrow(() -> new IllegalArgumentException("Credentials must be supplied via cli, env, or file. See help for info."));
+                .orElseThrow(() -> {
+                    specSupplier.get().commandLine().usage(System.out);
+                    return new IllegalArgumentException("Credentials must be supplied via cli, env, or file. See help for info.");
+                });
     }
 
     private Optional<ApiCredentials> getFileCredentials() {
-        if (Files.exists(credentialsFile)) {
+        if (!Files.exists(credentialsFile)) {
             return Optional.empty();
         }
 
@@ -77,13 +83,5 @@ public class Device implements Callable<UnifiResult<Void>> {
         return Optional.ofNullable(System.getenv(credentialVar))
                 .map(String::toCharArray)
                 .map(ApiCredentials::from);
-    }
-
-    private Optional<ApiCredentials> getCliCredentials() {
-        if (cliCredentials.username == null) {
-            return Optional.empty();
-        }
-
-        return Optional.of(ApiCredentials.getInstance(cliCredentials.username, cliCredentials.password));
     }
 }

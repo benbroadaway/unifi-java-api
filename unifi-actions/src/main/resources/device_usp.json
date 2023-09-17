@@ -1,0 +1,105 @@
+{
+  "_id": "000000000000000000000000",
+  "adopt_state": 0,
+  "adoptable_when_upgraded": false,
+  "adopted": true,
+  "bytes-r": 0,
+  "connection_network_name": "Default",
+  "countrycode_table": [],
+  "default": false,
+  "device_type": "MANAGED",
+  "disabled": false,
+  "displayable_version": "2.2.3",
+  "download_speed_bytes_per_second": 0,
+  "ethernet_overrides": [],
+  "fw_caps": 0,
+  "ip": "192.168.1.2",
+  "ipv4_lease_expiration_timestamp_seconds": 1695054983,
+  "is_access_point": false,
+  "isolated": false,
+  "last_connection_network_name": "Default",
+  "last_seen": 1694969969,
+  "last_uplink": {
+    "type": "wireless",
+    "uplink_device_name": "my-ap",
+    "uplink_mac": "00:00:00:00:00:00"
+  },
+  "license_state": "registered",
+  "locating": false,
+  "lte_connected": false,
+  "mac": "aa:aa:aa:aa:aa:aa",
+  "model": "UP1",
+  "model_in_eol": false,
+  "model_in_lts": false,
+  "model_incompatible": false,
+  "name": "my-usp",
+  "num_sta": 0,
+  "port_table": [],
+  "product_line": "NETWORK",
+  "radio_table": [],
+  "radio_table_stats": [],
+  "restarting": false,
+  "rx_bytes": 0,
+  "rx_bytes-d": 0,
+  "satisfaction": 87,
+  "spectrum_scanning": false,
+  "state": 1,
+  "support_wifi6e": false,
+  "sys_stats": {
+    "loadavg_1": 0.0,
+    "loadavg_15": 0.0,
+    "loadavg_5": 0.0,
+    "mem_buffer": 0,
+    "mem_total": 98304,
+    "mem_used": 87248
+  },
+  "system-stats": {
+    "cpu": 0.0,
+    "mem": 0.0,
+    "uptime": 0
+  },
+  "tx_bytes": 0,
+  "tx_bytes-d": 0,
+  "type": "uap",
+  "unsupported": false,
+  "unsupported_reason": 0,
+  "upgradable": false,
+  "upgrade_state": 0,
+  "uplink": {
+    "ap_mac": "aa:aa:aa:aa:aa:aa",
+    "essid": "ele-0000000000000000",
+    "radio_band": "ng",
+    "type": "wireless",
+    "uplink_device_name": "my-uplink",
+    "uplink_mac": "00:00:00:00:00:00"
+  },
+  "uplink_table": [],
+  "config_network": {
+    "type": "dhcp",
+    "bonding_enabled": false
+  },
+  "outlet_table": [
+    {
+      "index": 1,
+      "has_relay": true,
+      "has_metering": false,
+      "relay_state": true,
+      "cycle_enabled": false,
+      "name": "Outlet 1"
+    }
+  ],
+  "outlet_overrides": [
+    {
+      "index": 1,
+      "relay_state": true,
+      "cycle_enabled": false,
+      "name": "Outlet 1"
+    }
+  ],
+  "upload_speed_bytes_per_second": 0,
+  "uptime": 5336546,
+  "usage_bytes": 0.0,
+  "vap_table": [],
+  "version": "2.2.3.519",
+  "wlan_overrides": []
+}
