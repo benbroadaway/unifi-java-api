@@ -4,7 +4,7 @@
     <parent>
         <groupId>org.benbroadaway.unifi</groupId>
         <artifactId>unifi-parent</artifactId>
-        <version>0.0.5-SNAPSHOT</version>
+        <version>0.0.5</version>
     </parent>
 
     <artifactId>unifi-actions</artifactId>
