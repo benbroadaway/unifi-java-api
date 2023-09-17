@@ -4,8 +4,8 @@ import com.walmartlabs.concord.runtime.v2.sdk.Context;
 import com.walmartlabs.concord.runtime.v2.sdk.Task;
 import com.walmartlabs.concord.runtime.v2.sdk.TaskResult;
 import com.walmartlabs.concord.runtime.v2.sdk.Variables;
-import org.benbroadaway.unifi.actions.UnifiResult;
-import org.benbroadaway.unifi.actions.usp.RelayStateToggle;
+import org.benbroadaway.unifi.actions.ActionResult;
+import org.benbroadaway.unifi.actions.usp.SetRelayState;
 import org.benbroadaway.unifi.client.ApiCredentials;
 
 import javax.inject.Inject;
@@ -44,10 +44,10 @@ public class UnifiTask implements Task {
     }
 
     private static TaskResult handleUsp(TaskParams.UspParams params) {
-        RelayStateToggle relayStateToggle = RelayStateToggle.get(params.unifiHost(),
+        SetRelayState setRelayState = SetRelayState.getInstance(params.unifiHost(),
                 params.uspName(), getCredentials(params), params.validateCerts(), params.relayState());
 
-        UnifiResult<Void> result = relayStateToggle.call();
+        ActionResult<Void> result = setRelayState.call();
 
         if (!result.ok()) {
             return TaskResult.fail(new IllegalStateException("Failed to set state: " + result.error()));

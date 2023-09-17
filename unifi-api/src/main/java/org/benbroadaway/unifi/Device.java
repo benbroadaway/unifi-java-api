@@ -31,4 +31,8 @@ public interface Device {
     ConfigNetwork configNetwork();
     @JsonProperty("mgmt_network_id")
     Optional<String> mgmtNetworkId();
+
+    static ImmutableDevice.Builder builder() {
+        return ImmutableDevice.builder();
+    }
 }

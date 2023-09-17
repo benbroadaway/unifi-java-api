@@ -12,7 +12,8 @@ public class App implements Runnable {
     @SuppressWarnings("unused")
     private CommandSpec spec;
 
-    @Option(names = {"-h", "--help"}, usageHelp = true, scope = CommandLine.ScopeType.INHERIT, description = "display the command's help message")
+    @Option(names = {"-h", "--help"}, usageHelp = true, scope = CommandLine.ScopeType.INHERIT,
+            description = "display the command's help message")
     @SuppressWarnings("unused")
     boolean helpRequested = false;
 

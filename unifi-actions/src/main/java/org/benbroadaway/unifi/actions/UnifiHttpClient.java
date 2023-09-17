@@ -1,6 +1,7 @@
 package org.benbroadaway.unifi.actions;
 
 import org.benbroadaway.unifi.client.ApiCredentials;
+import org.benbroadaway.unifi.exception.UnifiException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,13 +16,14 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
 import java.security.SecureRandom;
-import java.util.function.BiFunction;
+import java.time.Duration;
+import java.util.List;
 
 public class UnifiHttpClient {
     private static final Logger log = LoggerFactory.getLogger(UnifiHttpClient.class);
 
     private final HttpClient client;
-    private String token;
+    private final String token;
     private final URI unifiHost;
 
     public static final String APPLICATION_JSON = "application/json";
@@ -29,12 +31,17 @@ public class UnifiHttpClient {
     public UnifiHttpClient(String unifiHost, ApiCredentials credentials, boolean validateCerts) {
         this.unifiHost = toUri(unifiHost);
         this.client = validateCerts ? defaultClient() : nonValidatingClient();
+        this.token = getCsrfToken(this.unifiHost, credentials, this.client);
+    }
 
+    protected String getCsrfToken(URI host, ApiCredentials creds, HttpClient client) {
         try {
-            this.token = initializeAuth(this.unifiHost, credentials, this.client);
+            return initializeAuth(host, creds, client);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
+            throw new UnifiException(e);
         } catch (Exception e) {
+            log.error("Error getting token from {}", host);
             throw new IllegalStateException("Failed to initialize authentication token: " + e.getMessage());
         }
     }
@@ -43,15 +50,19 @@ public class UnifiHttpClient {
         return unifiHost.resolve(uriPath);
     }
 
-    public <T> T withClient(BiFunction<HttpClient, String, T> f) {
-        return f.apply(client, token);
+    public String[] getCsrfHeader() {
+        return List.of("x-csrf-token", token).toArray(new String[0]);
+    }
+
+    public <T> HttpResponse<T> send(HttpRequest req, HttpResponse.BodyHandler<T> handler) throws IOException, InterruptedException {
+        return client.send(req, handler);
     }
 
     private static URI toUri(String uri) {
         try {
             return new URI(uri);
         } catch (URISyntaxException e) {
-            throw new RuntimeException("Invalid uri given: " + e.getMessage());
+            throw new UnifiException("Invalid uri given: " + e.getMessage());
         }
     }
 
@@ -69,21 +80,23 @@ public class UnifiHttpClient {
         return switch (resp.statusCode()) {
             case 200 -> resp.headers()
                     .firstValue("x-csrf-token")
-                    .orElseThrow(() -> new IllegalStateException("Successful auth call, but no csrf token found"));
-            case 403 -> throw new IllegalStateException("(403) Invalid auth");
-            default -> throw new IllegalStateException("(" + resp.statusCode() + "') Error calling auth endpoint");
+                    .orElseThrow(() -> new UnifiException("Successful auth call, but no csrf token found"));
+            case 403 -> throw new UnifiException("(403) Invalid auth");
+            default -> throw new UnifiException("(" + resp.statusCode() + "') Error calling auth endpoint");
         };
     }
 
     private static HttpClient defaultClient() {
         return HttpClient.newBuilder()
                 .cookieHandler(new CookieManager())
+                .connectTimeout(Duration.ofSeconds(10))
                 .build();
     }
 
     private static HttpClient nonValidatingClient() {
         return HttpClient.newBuilder()
                 .cookieHandler(new CookieManager())
+                .connectTimeout(Duration.ofSeconds(10))
                 .sslContext(nonValidatingSSLContext())
                 .build();
     }
@@ -100,7 +113,7 @@ public class UnifiHttpClient {
 
             return ctx;
         } catch (Exception e) {
-            throw new RuntimeException("Error initializing SSLContext: " + e.getMessage());
+            throw new UnifiException("Error initializing SSLContext: " + e.getMessage());
         }
     }
 }

@@ -1,10 +1,9 @@
 package org.benbroadaway.unifi.cli;
 
 import org.junit.jupiter.api.Test;
-import picocli.CommandLine;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 class AppTest extends AbstractTest {
 
@@ -12,7 +11,7 @@ class AppTest extends AbstractTest {
     void testVersion() {
         var expectedVersion = VersionInfo.getVersion();
 
-        int exitCode = run(List.of("--version"));
+        int exitCode = run(List.of("--version"), Map.of());
 
         assertExitCode(0, exitCode);
         assertLog(".*" +  expectedVersion + ".*");
@@ -20,19 +19,14 @@ class AppTest extends AbstractTest {
 
     @Test
     void testUsage() {
-        int exitCode = run(List.of());
+        int exitCode = run(List.of(), Map.of());
 
         assertExitCode(0, exitCode);
         assertLog(".*Usage: unifi .*");
-
     }
 
-    private static int run(List<String> args) {
-        var app = new App();
-        var cmd = new CommandLine(app);
-
-        var effectiveArgs = new ArrayList<>(args);
-
-        return cmd.execute(effectiveArgs.toArray(new String[0]));
+    @Override
+    protected int run(List<String> args, Map<Class<?>, Object> mockedClasses) {
+        return super.run(args, mockedClasses);
     }
 }
