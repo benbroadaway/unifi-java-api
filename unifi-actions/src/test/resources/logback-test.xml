@@ -5,7 +5,6 @@
         </encoder>
     </appender>
 
-    <!-- Turning down the apache http client logging -->
     <logger name="org.benbroadaway.unifi" level="INFO"/>
 
     <root level="INFO">

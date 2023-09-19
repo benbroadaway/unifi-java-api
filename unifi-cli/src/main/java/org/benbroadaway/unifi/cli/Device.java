@@ -3,9 +3,8 @@ package org.benbroadaway.unifi.cli;
 import org.benbroadaway.unifi.actions.Util;
 import org.benbroadaway.unifi.cli.completion.BooleanCandidates;
 import org.benbroadaway.unifi.cli.mixins.CLIAuth;
+import org.benbroadaway.unifi.cli.mixins.Log;
 import org.benbroadaway.unifi.client.ApiCredentials;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Files;
@@ -21,10 +20,12 @@ import static picocli.CommandLine.*;
         description = "Interact with Unifi devices",
         subcommands = { UspState.class })
 public class Device implements Callable<Integer> {
-    private static final Logger log = LoggerFactory.getLogger(Device.class);
     @Spec
     @SuppressWarnings("unused")
     private Model.CommandSpec spec;
+
+    @Mixin
+    protected Log log;
 
     @Option(names = {"-c", "--unifi-controller"},
             scope = ScopeType.INHERIT,

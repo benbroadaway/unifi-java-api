@@ -9,8 +9,6 @@ public class Main {
         try {
             code = cli.execute(args);
         } catch (Exception e) {
-            System.out.println("ERROR IN MAIN!!!!");
-
             cli.usage(System.out);
             code = 99;
         }

@@ -1,13 +1,71 @@
 <configuration>
-    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <appender name="STDOUT_INFO" class="ch.qos.logback.core.ConsoleAppender">
+        <Target>System.out</Target>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>INFO</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
         <encoder>
-            <pattern>%d{HH:mm:ss.SSS} [%thread] [%-5level] %logger{36} - %msg%n</pattern>
+            <pattern>%msg%n</pattern>
         </encoder>
     </appender>
 
-    <logger name="org.benbroadaway.unifi" level="INFO"/>
+    <appender name="STDERR_WARN" class="ch.qos.logback.core.ConsoleAppender">
+        <Target>System.err</Target>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>WARN</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <encoder>
+            <pattern>%msg%n</pattern>
+        </encoder>
+    </appender>
 
-    <root level="INFO">
-        <appender-ref ref="STDOUT"/>
+    <appender name="STDERR_ERROR" class="ch.qos.logback.core.ConsoleAppender">
+        <Target>System.err</Target>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <encoder>
+            <pattern>%msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="STDERR_DEBUG" class="ch.qos.logback.core.ConsoleAppender">
+        <Target>System.err</Target>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>DEBUG</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] [%-5level] - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <appender name="STDERR_TRACE" class="ch.qos.logback.core.ConsoleAppender">
+        <Target>System.err</Target>
+        <filter class="ch.qos.logback.classic.filter.LevelFilter">
+            <level>TRACE</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
+        </filter>
+        <encoder>
+            <pattern>%d{HH:mm:ss.SSS} [%thread] [%-5level] - %msg%n</pattern>
+        </encoder>
+    </appender>
+
+    <logger name="org.benbroadaway.unifi" level="TRACE"/>
+
+    <root level="TRACE">
+        <appender-ref ref="STDOUT_INFO"/>
+        <appender-ref ref="STDERR_WARN"/>
+        <appender-ref ref="STDERR_ERROR"/>
+        <appender-ref ref="STDERR_DEBUG"/>
+        <appender-ref ref="STDERR_TRACE"/>
     </root>
 </configuration>

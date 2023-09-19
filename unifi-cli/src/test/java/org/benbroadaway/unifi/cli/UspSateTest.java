@@ -36,7 +36,7 @@ class UspSateTest extends AbstractTest {
     void testNoSubCommand() {
         var exitCode = run(List.of("-d", "my-device"), Map.of());
         assertExitCode(1, exitCode);
-        assertLog(".*sub-command is missing.*");
+        assertLogErr(".*sub-command is missing.*");
     }
 
     @Test
@@ -95,8 +95,6 @@ class UspSateTest extends AbstractTest {
             throw new IllegalStateException("Failed to write file: " + e.getMessage(), e);
         }
     }
-
-
 
     static class MockUspState extends UspState {
 
