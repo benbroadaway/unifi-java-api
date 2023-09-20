@@ -88,11 +88,11 @@ public class SetRelayState extends AbstractAction implements Callable<ActionResu
         var uri = unifiClient.resolve("/proxy/network/api/s/default/rest/device/" + deviceId);
 
         var req = HttpRequest.newBuilder()
+                .PUT(HttpRequest.BodyPublishers.ofString(serializeBody(device), StandardCharsets.UTF_8))
                 .uri(uri)
                 .header("Content-Type", UnifiHttpClient.APPLICATION_JSON)
                 .header("Accept", UnifiHttpClient.APPLICATION_JSON)
                 .headers(unifiClient.getCsrfHeader())
-                .PUT(HttpRequest.BodyPublishers.ofString(serializeBody(device), StandardCharsets.UTF_8))
                 .build();
 
         try {
