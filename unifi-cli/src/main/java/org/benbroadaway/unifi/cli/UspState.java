@@ -19,8 +19,7 @@ public class UspState implements Callable<Integer> {
     private CommandSpec spec;
 
     @ParentCommand
-    @SuppressWarnings("unused")
-    Device parent;
+    Device device;
 
     @Mixin
     Log log;
@@ -28,10 +27,6 @@ public class UspState implements Callable<Integer> {
     @Mixin
     @SuppressWarnings("unused")
     CLIAuth cliAuth;
-
-    @Option(names = {"-d", "--device-name"}, scope = ScopeType.INHERIT, required = true,
-            description = "Target USP device")
-    protected String deviceName;
 
     @Override
     public Integer call() {
@@ -42,10 +37,10 @@ public class UspState implements Callable<Integer> {
 
     @Command(name = "get", description = "Get current USP relay state")
     void getState(@Mixin CLIAuth cliAuth, @Mixin Log log) {
-        log.debug("     unifi-host: {}", parent.unifiHost);
-        log.debug("toggling device: {}", deviceName);
+        log.debug("     unifi-host: {}", device.unifiHost);
+        log.debug("toggling device: {}", device.deviceName);
 
-        var credentials = parent.getCredentials(cliAuth, () -> spec);
+        var credentials = device.getCredentials(cliAuth, () -> spec);
         var relayState = actionForGet(credentials);
 
         var currentState = relayState.call()
@@ -62,21 +57,21 @@ public class UspState implements Callable<Integer> {
                           description = "USP device plug state. Candidates: ${COMPLETION-CANDIDATES}",
                           completionCandidates = BooleanCandidates.class)
                   boolean relayState) {
-        log.debug("     unifi-host: {}", parent.unifiHost);
-        log.debug("toggling device: {}", deviceName);
+        log.debug("     unifi-host: {}", device.unifiHost);
+        log.debug("toggling device: {}", device.deviceName);
         log.debug("     relayState: {}", relayState);
 
-        var credentials = parent.getCredentials(cliAuth, () -> spec);
+        var credentials = device.getCredentials(cliAuth, () -> spec);
         var relayStateToggle = actionForSet(credentials, relayState);
 
         relayStateToggle.call();
     }
 
     GetRelayState actionForGet(ApiCredentials credentials) {
-        return GetRelayState.getInstance(parent.unifiHost, deviceName, credentials, parent.validateCerts);
+        return GetRelayState.getInstance(device.unifiHost, device.deviceName, credentials, device.validateCerts);
     }
 
     SetRelayState actionForSet(ApiCredentials credentials, boolean relayState) {
-        return SetRelayState.getInstance(parent.unifiHost, deviceName, credentials, parent.validateCerts, relayState);
+        return SetRelayState.getInstance(device.unifiHost, device.deviceName, credentials, device.validateCerts, relayState);
     }
 }

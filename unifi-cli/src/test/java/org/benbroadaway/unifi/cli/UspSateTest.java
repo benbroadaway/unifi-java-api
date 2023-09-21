@@ -118,20 +118,22 @@ class UspSateTest extends AbstractTest {
             assertArrayEquals(expectedPassword.toCharArray(), credentials.password());
         }
 
-
         @Override
         GetRelayState actionForGet(ApiCredentials credentials) {
-            assertCommonParams(deviceName, credentials, parent);
+            assertCommonParams(device.deviceName, credentials, device);
 
             var relayState = mock(GetRelayState.class);
             when(relayState.call())
-                    .thenReturn(ActionResult.<Boolean>builder().ok(true).data(true).build());
+                    .thenReturn(ActionResult.<Boolean>builder()
+                            .ok(true)
+                            .data(true)
+                            .build());
             return relayState;
         }
 
         @Override
         SetRelayState actionForSet(ApiCredentials credentials, boolean relayState) {
-            assertCommonParams(deviceName, credentials, parent);
+            assertCommonParams(device.deviceName, credentials, device);
             assertTrue(relayState);
 
 
