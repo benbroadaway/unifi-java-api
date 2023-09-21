@@ -49,6 +49,10 @@ public class Device implements Callable<Integer> {
     Path credentialsFile = Paths.get(System.getProperty("user.home"))
             .resolve(".unifi/auth/default.json");
 
+    @Option(names = {"-d", "--device-name"}, scope = ScopeType.INHERIT, required = true,
+            description = "Target USP device")
+    protected String deviceName;
+
     @Override
     public Integer call() {
         log.warn("sub-command is missing");

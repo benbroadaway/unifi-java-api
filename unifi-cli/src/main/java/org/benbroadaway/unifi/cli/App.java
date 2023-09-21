@@ -1,18 +1,24 @@
 package org.benbroadaway.unifi.cli;
 
-import picocli.CommandLine;
+import org.benbroadaway.unifi.cli.mixins.Log;
 import picocli.CommandLine.Command;
 import picocli.CommandLine.Model.CommandSpec;
 import picocli.CommandLine.Option;
 import picocli.CommandLine.Spec;
 
-@Command(name = "unifi", subcommands = {Device.class})
+import static picocli.CommandLine.Mixin;
+import static picocli.CommandLine.ScopeType;
+
+@Command(name = "unifi", subcommands = { Device.class })
 public class App implements Runnable {
     @Spec
     @SuppressWarnings("unused")
     private CommandSpec spec;
 
-    @Option(names = {"-h", "--help"}, usageHelp = true, scope = CommandLine.ScopeType.INHERIT,
+    @Mixin
+    Log log;
+
+    @Option(names = {"-h", "--help"}, usageHelp = true, scope = ScopeType.INHERIT,
             description = "display the command's help message")
     @SuppressWarnings("unused")
     boolean helpRequested = false;
@@ -23,10 +29,10 @@ public class App implements Runnable {
     @Override
     public void run() {
         if (versionRequested) {
-            System.out.println(VersionInfo.getVersion());
+            log.info(VersionInfo.getVersion());
             return;
         }
 
-        spec.commandLine().usage(System.out);
+        log.info(spec.commandLine().getUsageMessage());
     }
 }

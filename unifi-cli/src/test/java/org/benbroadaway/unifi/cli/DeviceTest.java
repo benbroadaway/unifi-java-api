@@ -17,7 +17,7 @@ class DeviceTest extends AbstractTest {
 
     @Test
     void testNoSubCommand() {
-        var exitCode = run(List.of(), Map.of());
+        var exitCode = run(List.of("-d", "my-device"), Map.of());
         assertExitCode(1, exitCode);
         assertLogErr(".*sub-command is missing.*");
     }
