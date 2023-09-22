@@ -50,7 +50,6 @@ public abstract class AbstractTest {
         if (grep(outStr, pattern) != 1) {
             fail("Expected a single err log entry: '" + pattern + "', got: \n" + outStr);
         }
-
     }
 
     protected void assertLog(String pattern, int times) {
