@@ -65,7 +65,7 @@ public class Device implements Callable<Integer> {
                 .or(this::getEnvCredentials)
                 .or(this::getFileCredentials)
                 .orElseThrow(() -> {
-                    specSupplier.get().commandLine().usage(System.out);
+                    log.error(specSupplier.get().commandLine().getUsageMessage());
                     return new IllegalArgumentException("Credentials must be supplied via cli, env, or file. See help for info.");
                 });
     }

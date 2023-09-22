@@ -64,6 +64,23 @@ class UspSateTest extends AbstractTest {
     }
 
     @Test
+    void testSetError() {
+        var exitCode = run(List.of(
+                "-vvv",
+                "set",
+                "--username=test",
+                "--password=test",
+                "-c", "http://localhost",
+                "-d", "my-usp-device",
+                "--relay-state", "true"), Map.of(UspState.class, new MockUspState(true)));
+
+        assertExitCode(1, exitCode);
+        assertLogErr(".*Call error: forced exception.*");
+        assertLogErr(".*\\[main\\] \\[TRACE\\].*");
+        assertLogErr(".*java.lang.IllegalStateException: forced exception.*");
+    }
+
+    @Test
     void testNoAuth() {
         var exitCode = run(List.of(
                 "get",
@@ -100,15 +117,24 @@ class UspSateTest extends AbstractTest {
 
         private final String expectedUsername;
         private final String expectedPassword;
+        private final boolean throwError;
 
         public MockUspState() {
-            this.expectedUsername = "test";
-            this.expectedPassword = "test";
+            this("test", "test", false);
+        }
+
+        public MockUspState(boolean throwError) {
+            this("test", "test", throwError);
         }
 
         public MockUspState(String expectedUsername, String expectedPassword) {
+            this(expectedUsername, expectedPassword, false);
+        }
+
+        public MockUspState(String expectedUsername, String expectedPassword, boolean throwError) {
             this.expectedUsername = expectedUsername;
             this.expectedPassword = expectedPassword;
+            this.throwError = throwError;
         }
 
         private void assertCommonParams(String deviceName, ApiCredentials credentials, Device parent) {
@@ -138,8 +164,14 @@ class UspSateTest extends AbstractTest {
 
 
             var toggle = mock(SetRelayState.class);
-            when(toggle.call())
-                    .thenReturn(ActionResult.success());
+
+            if (throwError) {
+                when(toggle.call())
+                        .thenThrow(new IllegalStateException("forced exception"));
+            } else {
+                when(toggle.call())
+                        .thenReturn(ActionResult.success());
+            }
 
             return toggle;
         }
