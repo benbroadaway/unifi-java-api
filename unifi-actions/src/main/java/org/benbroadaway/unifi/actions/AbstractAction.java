@@ -52,6 +52,9 @@ public abstract class AbstractAction {
                     .filter(d -> d.name().equals(name))
                     .findFirst()
                     .orElseThrow(() -> new IllegalStateException("No '" + model + "' device found with name '" + name + "'"));
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new UnifiException(e);
         } catch (Exception e) {
             throw new UnifiException("Error retrieving current device state: " + e.getMessage());
         }
