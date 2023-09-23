@@ -24,7 +24,7 @@ public class UnifiTask implements Task {
 
     static {
         handlers = new EnumMap<>(Action.class);
-        handlers.put(Action.SET_USP_STATE, params -> handleUsp((TaskParams.UspParams) params));
+        handlers.put(Action.SET_USP_STATE, params -> setUspState((TaskParams.UspParams) params));
     }
 
     private static final Function<TaskParams, TaskResult> defaultHandler = p -> TaskResult.fail("Unknown action '" + p.action() + "'");
@@ -43,9 +43,13 @@ public class UnifiTask implements Task {
         return handlers.getOrDefault(action, defaultHandler).apply(params);
     }
 
-    private static TaskResult handleUsp(TaskParams.UspParams params) {
+    private static TaskResult setUspState(TaskParams.UspParams params) {
+        int index = params.outletIndex()
+                .orElseThrow(() -> new IllegalArgumentException("Input parameter 'outletIndex' is required!"));
+
+
         SetRelayState setRelayState = SetRelayState.getInstance(params.unifiHost(),
-                params.uspName(), getCredentials(params), params.validateCerts(), params.relayState());
+                params.uspName(), index, getCredentials(params), params.validateCerts(), params.relayState());
 
         ActionResult<Void> result = setRelayState.call();
 

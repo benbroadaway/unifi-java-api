@@ -7,9 +7,10 @@ import org.benbroadaway.unifi.actions.ActionResult;
 import org.benbroadaway.unifi.actions.UnifiHttpClient;
 import org.benbroadaway.unifi.client.ApiCredentials;
 
+import java.util.List;
 import java.util.concurrent.Callable;
 
-public class GetRelayState extends AbstractAction implements Callable<ActionResult<Boolean>> {
+public class GetRelayState extends AbstractAction implements Callable<ActionResult<List<OutletOverride>>> {
     private final String plugName;
 
     public static GetRelayState getInstance(String unifiHost,
@@ -29,14 +30,12 @@ public class GetRelayState extends AbstractAction implements Callable<ActionResu
     }
 
     @Override
-    public ActionResult<Boolean> call() {
+    public ActionResult<List<OutletOverride>> call() {
         var currentDevice = getCurrentDevice("UP1", plugName);
-        var relayIndex = 1;
-        var currentState = getOutletRelayState(currentDevice, relayIndex); // TODO handle multi-outlet devices
 
-        return ActionResult.<Boolean>builder()
+        return ActionResult.<List<OutletOverride>>builder()
                 .ok(true)
-                .data(currentState)
+                .data(currentDevice.outletOverrides())
                 .build();
     }
 

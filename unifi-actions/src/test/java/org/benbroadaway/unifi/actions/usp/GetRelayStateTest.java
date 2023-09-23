@@ -32,7 +32,7 @@ class GetRelayStateTest extends AbstractDeviceTest {
         assertNotNull(result);
         assertTrue(result.ok());
         assertTrue(result.data().isPresent());
-        assertTrue(result.data().get());
+        assertTrue(result.data().get().get(0).relayState());
     }
 
     private String listOfDevices(int count) {

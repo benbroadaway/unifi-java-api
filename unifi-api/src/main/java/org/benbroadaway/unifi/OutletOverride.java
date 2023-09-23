@@ -29,4 +29,8 @@ public interface OutletOverride {
 
     @JsonProperty("name")
     String name();
+
+    static ImmutableOutletOverride.Builder builder() {
+        return ImmutableOutletOverride.builder();
+    }
 }
