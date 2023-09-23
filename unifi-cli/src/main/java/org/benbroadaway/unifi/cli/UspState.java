@@ -1,5 +1,6 @@
 package org.benbroadaway.unifi.cli;
 
+import org.benbroadaway.unifi.OutletOverride;
 import org.benbroadaway.unifi.actions.ActionResult;
 import org.benbroadaway.unifi.actions.usp.GetRelayState;
 import org.benbroadaway.unifi.actions.usp.SetRelayState;
@@ -8,6 +9,8 @@ import org.benbroadaway.unifi.cli.mixins.CLIAuth;
 import org.benbroadaway.unifi.cli.mixins.Log;
 import org.benbroadaway.unifi.client.ApiCredentials;
 
+import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.Callable;
 
 import static picocli.CommandLine.*;
@@ -37,14 +40,14 @@ public class UspState implements Callable<Integer> {
     }
 
     @Command(name = "get", description = "Get current USP relay state")
-    int getState(@Mixin CLIAuth cliAuth, @Mixin Log log) {
+    int getState(@Mixin CLIAuth cliAuth, @Mixin Log log,
+                 @Option(names = { "-i", "--index" }, arity = "0..1", description = "1-based outlet index to get", scope = ScopeType.INHERIT) Optional<Integer> index) {
         log.debug("     unifi-host: {}", device.unifiHost);
         log.debug("toggling device: {}", device.deviceName);
 
-        var relayState = tryIt(() -> {
+        var relayState = tryAction(() -> {
             var credentials = device.getCredentials(cliAuth, () -> spec);
-            var getRelayState = actionForGet(credentials);
-            return getRelayState.call();
+            return actionForGet(credentials).call();
         });
 
         if (!relayState.ok()) {
@@ -53,25 +56,46 @@ public class UspState implements Callable<Integer> {
 
         var currentState = relayState.data()
                 .orElseThrow(() -> new IllegalStateException("No response!"));
-        log.info("{}", currentState);
+
+        index.ifPresentOrElse(i -> printIndex(currentState, i), () -> printAll(currentState));
 
         return 0;
     }
 
-    private <T> ActionResult<T> tryIt(Callable<ActionResult<T>> c) {
-        try {
-            return c.call();
-        } catch (Exception e) {
-            log.error("Call error: {}", e.getMessage());
-            log.trace("", e);
-        }
+    /**
+     * Prints the state of a given index. Only the state (true or false) is printed
+     * @param outletOverrides current state from a device
+     * @param index 1-based outlet index to print
+     */
+    private void printIndex(List<OutletOverride> outletOverrides, int index) {
+        var state = outletOverrides.stream()
+                .filter(e -> e.index() == index)
+                .map(OutletOverride::relayState)
+                .findAny()
+                .orElseThrow(() -> new IllegalArgumentException("No outlet with index: " + index));
+        log.info("{}", state);
+    }
 
-        return ActionResult.<T>builder().ok(false).build();
+    /**
+     * Prints the state of all outlets in a table.
+     * @param outletOverrides current state from a device
+     */
+    private void printAll(List<OutletOverride> outletOverrides) {
+        String fmt = "%-10s%s";
+        log.info("{}", String.format(fmt, "Index", "Relay State"));
+
+        outletOverrides.forEach(o ->
+                log.info("{}", String.format(fmt, o.index(), o.relayState())));
     }
 
     @Command(name = "set", description = "Set USP relay state")
     int setState(@Mixin CLIAuth cliAuth,
                  @Mixin Log log,
+                 @Option(names = { "-i", "--index" },
+                         required = true,
+                         description = "1-based outlet index to get",
+                         scope = ScopeType.INHERIT)
+                 int index,
                  @Option(names = {"--relay-state"},
                          arity = "1",
                          description = "USP device plug state. Candidates: ${COMPLETION-CANDIDATES}",
@@ -81,10 +105,9 @@ public class UspState implements Callable<Integer> {
         log.debug("toggling device: {}", device.deviceName);
         log.debug("     relayState: {}", relayState);
 
-        var result = tryIt(() -> {
+        var result = tryAction(() -> {
             var credentials = device.getCredentials(cliAuth, () -> spec);
-            var relayStateToggle = actionForSet(credentials, relayState);
-            return relayStateToggle.call();
+            return actionForSet(credentials, index, relayState).call();
         });
 
         return result.ok() ? 0 : 1;
@@ -94,7 +117,18 @@ public class UspState implements Callable<Integer> {
         return GetRelayState.getInstance(device.unifiHost, device.deviceName, credentials, device.validateCerts);
     }
 
-    SetRelayState actionForSet(ApiCredentials credentials, boolean relayState) {
-        return SetRelayState.getInstance(device.unifiHost, device.deviceName, credentials, device.validateCerts, relayState);
+    SetRelayState actionForSet(ApiCredentials credentials, int index, boolean relayState) {
+        return SetRelayState.getInstance(device.unifiHost, device.deviceName, index, credentials, device.validateCerts, relayState);
+    }
+
+    private <T> ActionResult<T> tryAction(Callable<ActionResult<T>> c) {
+        try {
+            return c.call();
+        } catch (Exception e) {
+            log.error("Call error: {}", e.getMessage());
+            log.trace("", e);
+        }
+
+        return ActionResult.<T>builder().ok(false).build();
     }
 }

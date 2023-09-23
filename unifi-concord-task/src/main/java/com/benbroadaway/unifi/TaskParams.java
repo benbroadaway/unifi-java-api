@@ -1,5 +1,7 @@
 package com.benbroadaway.unifi;
 
+import java.util.Optional;
+
 public interface TaskParams {
     String action();
     String unifiHost();
@@ -9,6 +11,7 @@ public interface TaskParams {
 
     public interface UspParams extends TaskParams {
         String uspName();
+        Optional<Integer> outletIndex();
         boolean relayState();
     }
 }

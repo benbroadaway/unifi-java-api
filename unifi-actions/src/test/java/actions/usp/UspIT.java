@@ -21,7 +21,12 @@ class UspIT {
                 .password(assertEnv("TEST_UNIFI_PASSWORD").toCharArray())
                 .build();
 
-        var setState = SetRelayState.getInstance(assertEnv("TEST_UNIFI_HOST"), assertEnv("TEST_UNIFI_DEVICE"), creds, true, true);
+        var setState = SetRelayState.getInstance(assertEnv("TEST_UNIFI_HOST"),
+                                                 assertEnv("TEST_UNIFI_DEVICE"),
+                                                 1,
+                                                 creds,
+                                                 true,
+                                                 true);
 
         // --- execute
 

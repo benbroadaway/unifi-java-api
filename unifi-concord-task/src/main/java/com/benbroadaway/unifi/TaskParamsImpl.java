@@ -5,6 +5,7 @@ import com.walmartlabs.concord.runtime.v2.sdk.Variables;
 
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Optional;
 
 public class TaskParamsImpl implements TaskParams {
 
@@ -67,6 +68,12 @@ public class TaskParamsImpl implements TaskParams {
             return input.assertString("uspName");
         }
 
+        @Override
+        public Optional<Integer> outletIndex() {
+            return input.has("outletIndex")
+                    ? Optional.of(input.getInt("outletIndex", -1))
+                    : Optional.empty();
+        }
         @Override
         public boolean relayState() {
             return input.assertBoolean("relayState");

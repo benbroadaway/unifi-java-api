@@ -27,15 +27,15 @@ class SetRelayStateTest extends AbstractDeviceTest {
 
         // TODO add set response
 
-        var setAction = new MockSetRelayState(TEST_PLUG, false, List.of(device, update));
+        var setAction = new MockSetRelayState(TEST_PLUG, 1, false, List.of(device, update));
 
         setAction.call();
 
     }
 
     private static class MockSetRelayState extends SetRelayState {
-        public MockSetRelayState(String plugName,  boolean relayState, List<HttpResponse<?>> mockResponses) {
-            super(plugName, relayState, new MockUnifiHttpClient(mockResponses));
+        public MockSetRelayState(String plugName, int index, boolean relayState, List<HttpResponse<?>> mockResponses) {
+            super(plugName, index, relayState, new MockUnifiHttpClient(mockResponses));
         }
     }
 

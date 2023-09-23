@@ -8,7 +8,9 @@ import java.util.Optional;
 @Value.Style(jdkOnly = true)
 public interface ActionResult<T> {
     boolean ok();
+
     Optional<String> error();
+
     Optional<T> data();
 
     static <T> ImmutableActionResult.Builder<T> builder() {

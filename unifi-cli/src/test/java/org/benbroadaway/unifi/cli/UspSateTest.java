@@ -1,5 +1,6 @@
 package org.benbroadaway.unifi.cli;
 
+import org.benbroadaway.unifi.OutletOverride;
 import org.benbroadaway.unifi.actions.ActionResult;
 import org.benbroadaway.unifi.actions.usp.GetRelayState;
 import org.benbroadaway.unifi.actions.usp.SetRelayState;
@@ -58,6 +59,7 @@ class UspSateTest extends AbstractTest {
                 "--password=test",
                 "-c", "http://localhost",
                 "-d", "my-usp-device",
+                "-i", "0",
                 "--relay-state", "true"), Map.of(UspState.class, new MockUspState("test", "test")));
 
         assertExitCode(0, exitCode);
@@ -72,6 +74,7 @@ class UspSateTest extends AbstractTest {
                 "--password=test",
                 "-c", "http://localhost",
                 "-d", "my-usp-device",
+                "-i", "1",
                 "--relay-state", "true"), Map.of(UspState.class, new MockUspState(true)));
 
         assertExitCode(1, exitCode);
@@ -85,7 +88,8 @@ class UspSateTest extends AbstractTest {
         var exitCode = run(List.of(
                 "get",
                 "-c", "http://localhost",
-                "-d", "my-usp-device"), Map.of(UspState.class, new MockUspState()));
+                "-d", "my-usp-device",
+                "-i", "1"), Map.of(UspState.class, new MockUspState()));
 
         assertExitCode(1, exitCode);
         assertLogErr(".*Credentials must be supplied via cli, env, or file. See help for info.*");
@@ -150,15 +154,20 @@ class UspSateTest extends AbstractTest {
 
             var relayState = mock(GetRelayState.class);
             when(relayState.call())
-                    .thenReturn(ActionResult.<Boolean>builder()
+                    .thenReturn(ActionResult.<List<OutletOverride>>builder()
                             .ok(true)
-                            .data(true)
+                            .data(List.of(OutletOverride.builder()
+                                    .name("test-usp")
+                                    .index(1)
+                                    .relayState(true)
+                                    .cycleEnabled(false)
+                                    .build()))
                             .build());
             return relayState;
         }
 
         @Override
-        SetRelayState actionForSet(ApiCredentials credentials, boolean relayState) {
+        SetRelayState actionForSet(ApiCredentials credentials, int index, boolean relayState) {
             assertCommonParams(device.deviceName, credentials, device);
             assertTrue(relayState);
 

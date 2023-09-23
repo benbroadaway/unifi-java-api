@@ -24,31 +24,33 @@ public class SetRelayState extends AbstractAction implements Callable<ActionResu
     private static final Logger log = LoggerFactory.getLogger(SetRelayState.class);
 
     private final String plugName;
+    private final int index;
     private final boolean relayState;
 
     public static SetRelayState getInstance(String unifiHost,
                                             String plugName,
+                                            int index,
                                             ApiCredentials unifiCreds,
                                             boolean validateCerts,
                                             boolean relayState) {
-        return new SetRelayState(unifiHost, plugName, unifiCreds, validateCerts, relayState);
+        return new SetRelayState(unifiHost, plugName, index, unifiCreds, validateCerts, relayState);
     }
 
-    private SetRelayState(String unifiHost, String plugName, ApiCredentials unifiCreds, boolean validateCerts, boolean relayState) {
-        this(plugName, relayState, new UnifiHttpClient(unifiHost, unifiCreds, validateCerts));
+    private SetRelayState(String unifiHost, String plugName, int index, ApiCredentials unifiCreds, boolean validateCerts, boolean relayState) {
+        this(plugName, index, relayState, new UnifiHttpClient(unifiHost, unifiCreds, validateCerts));
     }
 
-    SetRelayState(String plugName, boolean relayState, UnifiHttpClient unifiClient) {
+    SetRelayState(String plugName, int index, boolean relayState, UnifiHttpClient unifiClient) {
         super(unifiClient);
         this.plugName = plugName;
+        this.index = index;
         this.relayState = relayState;
     }
 
     @Override
     public ActionResult<Void> call() {
         var currentDevice = getCurrentDevice("UP1", plugName);
-        var relayIndex = 1;
-        var currentState = getOutletRelayState(currentDevice, relayIndex); // TODO handle multi-outlet devices
+        var currentState = getOutletRelayState(currentDevice, index);
         if (currentState == relayState) {
             log.info("Current state matches desired state.");
             return ActionResult.success();
@@ -58,7 +60,7 @@ public class SetRelayState extends AbstractAction implements Callable<ActionResu
                 .orElseThrow(() -> new IllegalStateException("no device id found"));
         var outletOverrides = currentDevice.outletOverrides().stream()
                 // outlet indices are 1-based
-                .map(oo -> oo.index() != relayIndex ? oo : ImmutableOutletOverride.builder()
+                .map(oo -> oo.index() != index ? oo : ImmutableOutletOverride.builder()
                         .from(oo)
                         .relayState(relayState)
                         .build())
@@ -101,6 +103,9 @@ public class SetRelayState extends AbstractAction implements Callable<ActionResu
             if (resp.statusCode() != 200) {
                 throw new UnifiException("Invalid response code  '" + resp.statusCode() + " received while updating device");
             }
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+            throw new UnifiException(e);
         } catch (Exception e) {
             throw new UnifiException("Error sending device state: " + e.getMessage());
         }
