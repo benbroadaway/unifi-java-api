@@ -17,7 +17,7 @@ public interface ApiCredentials {
     static ApiCredentials from(char[] raw) {
         int separatorIndex = findSeparator(raw);
         String username = new String(Arrays.copyOfRange(raw, 0, separatorIndex));
-        char[] password = Arrays.copyOfRange(raw, separatorIndex, raw.length);
+        char[] password = Arrays.copyOfRange(raw, separatorIndex + 1, raw.length);
 
         return getInstance(username, password);
     }
@@ -29,8 +29,7 @@ public interface ApiCredentials {
                 .build();
     }
 
-    private static int findSeparator(char[] chars) {
-
+    static int findSeparator(char[] chars) {
         for (int i=0; i<chars.length; i++) {
             if (chars[i] == ':') {
                 return i;
