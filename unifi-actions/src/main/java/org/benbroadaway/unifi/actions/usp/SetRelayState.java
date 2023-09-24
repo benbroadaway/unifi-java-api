@@ -1,10 +1,8 @@
 package org.benbroadaway.unifi.actions.usp;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import org.benbroadaway.unifi.Device;
-import org.benbroadaway.unifi.ImmutableDevice;
-import org.benbroadaway.unifi.ImmutableOutletOverride;
-import org.benbroadaway.unifi.OutletOverride;
+import org.benbroadaway.unifi.Outlet;
+import org.benbroadaway.unifi.Usp;
 import org.benbroadaway.unifi.actions.AbstractAction;
 import org.benbroadaway.unifi.actions.ActionResult;
 import org.benbroadaway.unifi.actions.UnifiHttpClient;
@@ -17,7 +15,6 @@ import org.slf4j.LoggerFactory;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.nio.charset.StandardCharsets;
-import java.util.Optional;
 import java.util.concurrent.Callable;
 
 public class SetRelayState extends AbstractAction implements Callable<ActionResult<Void>> {
@@ -60,16 +57,14 @@ public class SetRelayState extends AbstractAction implements Callable<ActionResu
                 .orElseThrow(() -> new IllegalStateException("no device id found"));
         var outletOverrides = currentDevice.outletOverrides().stream()
                 // outlet indices are 1-based
-                .map(oo -> oo.index() != index ? oo : ImmutableOutletOverride.builder()
+                .map(oo -> oo.index() != index ? oo : Outlet.builder()
                         .from(oo)
                         .relayState(relayState)
                         .build())
                 .toList();
 
-        var desiredState = ImmutableDevice.builder()
-                .from(currentDevice)
+        var desiredState = Usp.copyWithoutId(currentDevice)
                 .outletOverrides(outletOverrides)
-                .deviceId(Optional.empty())
                 .build();
 
         updateDevice(desiredState, deviceId);
@@ -77,15 +72,15 @@ public class SetRelayState extends AbstractAction implements Callable<ActionResu
         return ActionResult.success();
     }
 
-    private boolean getOutletRelayState(Device device, int outlet) {
+    private boolean getOutletRelayState(Usp device, int outlet) {
         return device.outletOverrides().stream()
                 .filter(oo -> oo.index() == outlet)
-                .map(OutletOverride::relayState)
+                .map(Outlet::relayState)
                 .findFirst()
                 .orElseThrow(() -> new IllegalStateException("No outlet number: " + outlet));
     }
 
-    private void updateDevice(Device device, String deviceId) {
+    private void updateDevice(Usp device, String deviceId) {
         var unifiClient = getUnifiClient();
         var uri = unifiClient.resolve("/proxy/network/api/s/default/rest/device/" + deviceId);
 

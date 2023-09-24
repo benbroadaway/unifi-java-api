@@ -1,7 +1,8 @@
 package org.benbroadaway.unifi.actions;
 
 import com.fasterxml.jackson.databind.JavaType;
-import org.benbroadaway.unifi.Device;
+import org.benbroadaway.unifi.UnifiDevice;
+import org.benbroadaway.unifi.Usp;
 import org.benbroadaway.unifi.client.ApiCredentials;
 import org.benbroadaway.unifi.exception.UnifiException;
 
@@ -27,7 +28,7 @@ public abstract class AbstractAction {
         return this.unifiClient;
     }
 
-    protected Device getCurrentDevice(String model, String name) {
+    protected List<UnifiDevice> getDevices() {
         var uri = unifiClient.resolve("/proxy/network/api/s/default/stat/device");
 
         var req = HttpRequest.newBuilder()
@@ -44,20 +45,26 @@ public abstract class AbstractAction {
                 throw new IllegalStateException("invalid response code: ${resp.statusCode()}");
             }
 
-            var listOfDevicesType = Util.getMapper().getTypeFactory().constructCollectionType(List.class, Device.class);
+            var listOfDevicesType = Util.getMapper().getTypeFactory().constructCollectionType(List.class, UnifiDevice.class);
 
-            ApiResponse<List<Device>> apiResponse = readBody(resp, listOfDevicesType);
-            return apiResponse.data().stream()
-                    .filter(d -> d.model().equals(model))
-                    .filter(d -> d.name().equals(name))
-                    .findFirst()
-                    .orElseThrow(() -> new IllegalStateException("No '" + model + "' device found with name '" + name + "'"));
+            ApiResponse<List<UnifiDevice>> apiResponse = readBody(resp, listOfDevicesType);
+
+            return apiResponse.data();
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new UnifiException(e);
         } catch (Exception e) {
-            throw new UnifiException("Error retrieving current device state: " + e.getMessage());
+            throw new UnifiException("Error retrieving devices: " + e.getMessage());
         }
+    }
+
+    protected Usp getCurrentDevice(String model, String name) {
+        return getDevices().stream()
+                .filter(d -> d.model().equals(model))
+                .filter(d -> d.name().equals(name))
+                .map(Usp.class::cast)
+                .findFirst()
+                .orElseThrow(() -> new IllegalStateException("No '" + model + "' device found with name '" + name + "'"));
     }
 
     protected <T> ApiResponse<T> readBody(HttpResponse<InputStream> resp, JavaType returnParam) {

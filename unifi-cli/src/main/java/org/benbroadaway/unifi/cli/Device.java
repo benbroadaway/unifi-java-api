@@ -1,6 +1,8 @@
 package org.benbroadaway.unifi.cli;
 
+import org.benbroadaway.unifi.actions.ActionResult;
 import org.benbroadaway.unifi.actions.Util;
+import org.benbroadaway.unifi.actions.device.GetDevices;
 import org.benbroadaway.unifi.cli.completion.BooleanCandidates;
 import org.benbroadaway.unifi.cli.mixins.CLIAuth;
 import org.benbroadaway.unifi.cli.mixins.Log;
@@ -49,15 +51,37 @@ public class Device implements Callable<Integer> {
     Path credentialsFile = Paths.get(System.getProperty("user.home"))
             .resolve(".unifi/auth/default.json");
 
-    @Option(names = {"-d", "--device-name"}, scope = ScopeType.INHERIT, required = true,
-            description = "Target USP device")
-    protected String deviceName;
-
     @Override
     public Integer call() {
         log.warn("sub-command is missing");
 
         return 1;
+    }
+
+    @Command(name = "get", description = "Get all devices")
+    int get(@Mixin CLIAuth cliAuth, @Mixin Log log) {
+        log.debug("     unifi-host: {}", unifiHost);
+
+        var result = tryAction(() -> {
+            var credentials = getCredentials(cliAuth, () -> spec);
+            return actionForGet(credentials).call();
+        });
+
+        if (!result.ok()) {
+            return 1;
+        }
+
+        var devices = result.data()
+                .orElseThrow(() -> new IllegalStateException("No response!"));
+
+        String fmt = "%-10s%-25s%s";
+        log.info("{}", String.format(fmt, "Model", "Device ID", "Name"));
+
+        for (var d : devices) {
+            log.info("{}", String.format(fmt, d.model(), d.deviceId().orElse("n/a"), d.name()));
+        }
+
+        return 0;
     }
 
     public ApiCredentials getCredentials(CLIAuth cliAuth, Supplier<Model.CommandSpec> specSupplier) {
@@ -88,5 +112,20 @@ public class Device implements Callable<Integer> {
         return Optional.ofNullable(System.getenv(credentialVar))
                 .map(String::toCharArray)
                 .map(ApiCredentials::from);
+    }
+
+    private <T> ActionResult<T> tryAction(Callable<ActionResult<T>> c) {
+        try {
+            return c.call();
+        } catch (Exception e) {
+            log.error("Call error: {}", e.getMessage());
+            log.trace("", e);
+        }
+
+        return ActionResult.<T>builder().ok(false).build();
+    }
+
+    GetDevices actionForGet(ApiCredentials credentials) {
+        return GetDevices.getInstance(unifiHost, credentials, validateCerts);
     }
 }

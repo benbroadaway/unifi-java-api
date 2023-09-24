@@ -9,9 +9,9 @@ import java.util.Optional;
 
 @Value.Immutable
 @Value.Style(jdkOnly = true)
-@JsonDeserialize(as = ImmutableOutletOverride.class)
+@JsonDeserialize(as = ImmutableOutlet.class)
 @JsonInclude(JsonInclude.Include.NON_EMPTY)
-public interface OutletOverride {
+public interface Outlet {
     @JsonProperty("index")
     int index();
 
@@ -30,7 +30,7 @@ public interface OutletOverride {
     @JsonProperty("name")
     String name();
 
-    static ImmutableOutletOverride.Builder builder() {
-        return ImmutableOutletOverride.builder();
+    static ImmutableOutlet.Builder builder() {
+        return ImmutableOutlet.builder();
     }
 }
