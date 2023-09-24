@@ -1,6 +1,6 @@
 package org.benbroadaway.unifi.cli;
 
-import org.benbroadaway.unifi.OutletOverride;
+import org.benbroadaway.unifi.Outlet;
 import org.benbroadaway.unifi.actions.ActionResult;
 import org.benbroadaway.unifi.actions.usp.GetRelayState;
 import org.benbroadaway.unifi.actions.usp.SetRelayState;
@@ -24,13 +24,6 @@ class UspSateTest extends AbstractTest {
         var exitCode = run(List.of("--help"), Map.of());
         assertExitCode(0, exitCode);
         assertLog(".*Perform state actions on USP device.*");
-    }
-
-    @Test
-    void testNoDevice() {
-        var exitCode = run(List.of(), Map.of());
-        assertExitCode(2, exitCode);
-        assertLogErr(".*Missing required option: '--device-name=<deviceName>'.*");
     }
 
     @Test
@@ -150,13 +143,13 @@ class UspSateTest extends AbstractTest {
 
         @Override
         GetRelayState actionForGet(ApiCredentials credentials) {
-            assertCommonParams(device.deviceName, credentials, device);
+            assertCommonParams(deviceName, credentials, device);
 
             var relayState = mock(GetRelayState.class);
             when(relayState.call())
-                    .thenReturn(ActionResult.<List<OutletOverride>>builder()
+                    .thenReturn(ActionResult.<List<Outlet>>builder()
                             .ok(true)
-                            .data(List.of(OutletOverride.builder()
+                            .data(List.of(Outlet.builder()
                                     .name("test-usp")
                                     .index(1)
                                     .relayState(true)
@@ -168,7 +161,7 @@ class UspSateTest extends AbstractTest {
 
         @Override
         SetRelayState actionForSet(ApiCredentials credentials, int index, boolean relayState) {
-            assertCommonParams(device.deviceName, credentials, device);
+            assertCommonParams(deviceName, credentials, device);
             assertTrue(relayState);
 
 

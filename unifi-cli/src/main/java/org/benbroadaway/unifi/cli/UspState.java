@@ -1,6 +1,6 @@
 package org.benbroadaway.unifi.cli;
 
-import org.benbroadaway.unifi.OutletOverride;
+import org.benbroadaway.unifi.Outlet;
 import org.benbroadaway.unifi.actions.ActionResult;
 import org.benbroadaway.unifi.actions.usp.GetRelayState;
 import org.benbroadaway.unifi.actions.usp.SetRelayState;
@@ -32,6 +32,11 @@ public class UspState implements Callable<Integer> {
     @SuppressWarnings("unused")
     CLIAuth cliAuth;
 
+    @Option(names = {"-d", "--device-name"}, scope = ScopeType.INHERIT,
+            description = "Target USP device")
+    protected String deviceName;
+
+
     @Override
     public Integer call() {
         log.warn("sub-command is missing");
@@ -41,20 +46,23 @@ public class UspState implements Callable<Integer> {
 
     @Command(name = "get", description = "Get current USP relay state")
     int getState(@Mixin CLIAuth cliAuth, @Mixin Log log,
-                 @Option(names = { "-i", "--index" }, arity = "0..1", description = "1-based outlet index to get", scope = ScopeType.INHERIT) Optional<Integer> index) {
+                 @Option(names = { "-i", "--index" },
+                         arity = "0..1",
+                         description = "1-based outlet index to get",
+                         scope = ScopeType.INHERIT)
+                 Optional<Integer> index) {
         log.debug("     unifi-host: {}", device.unifiHost);
-        log.debug("toggling device: {}", device.deviceName);
 
-        var relayState = tryAction(() -> {
+        var result = tryAction(() -> {
             var credentials = device.getCredentials(cliAuth, () -> spec);
             return actionForGet(credentials).call();
         });
 
-        if (!relayState.ok()) {
+        if (!result.ok()) {
             return 1;
         }
 
-        var currentState = relayState.data()
+        var currentState = result.data()
                 .orElseThrow(() -> new IllegalStateException("No response!"));
 
         index.ifPresentOrElse(i -> printIndex(currentState, i), () -> printAll(currentState));
@@ -67,10 +75,10 @@ public class UspState implements Callable<Integer> {
      * @param outletOverrides current state from a device
      * @param index 1-based outlet index to print
      */
-    private void printIndex(List<OutletOverride> outletOverrides, int index) {
+    private void printIndex(List<Outlet> outletOverrides, int index) {
         var state = outletOverrides.stream()
                 .filter(e -> e.index() == index)
-                .map(OutletOverride::relayState)
+                .map(Outlet::relayState)
                 .findAny()
                 .orElseThrow(() -> new IllegalArgumentException("No outlet with index: " + index));
         log.info("{}", state);
@@ -80,7 +88,7 @@ public class UspState implements Callable<Integer> {
      * Prints the state of all outlets in a table.
      * @param outletOverrides current state from a device
      */
-    private void printAll(List<OutletOverride> outletOverrides) {
+    private void printAll(List<Outlet> outletOverrides) {
         String fmt = "%-10s%s";
         log.info("{}", String.format(fmt, "Index", "Relay State"));
 
@@ -102,7 +110,7 @@ public class UspState implements Callable<Integer> {
                          completionCandidates = BooleanCandidates.class)
                  boolean relayState) {
         log.debug("     unifi-host: {}", device.unifiHost);
-        log.debug("toggling device: {}", device.deviceName);
+        log.debug("toggling device: {}", deviceName);
         log.debug("     relayState: {}", relayState);
 
         var result = tryAction(() -> {
@@ -114,11 +122,11 @@ public class UspState implements Callable<Integer> {
     }
 
     GetRelayState actionForGet(ApiCredentials credentials) {
-        return GetRelayState.getInstance(device.unifiHost, device.deviceName, credentials, device.validateCerts);
+        return GetRelayState.getInstance(device.unifiHost, deviceName, credentials, device.validateCerts);
     }
 
     SetRelayState actionForSet(ApiCredentials credentials, int index, boolean relayState) {
-        return SetRelayState.getInstance(device.unifiHost, device.deviceName, index, credentials, device.validateCerts, relayState);
+        return SetRelayState.getInstance(device.unifiHost, deviceName, index, credentials, device.validateCerts, relayState);
     }
 
     private <T> ActionResult<T> tryAction(Callable<ActionResult<T>> c) {

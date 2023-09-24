@@ -1,16 +1,22 @@
 package org.benbroadaway.unifi.cli;
 
+import com.fasterxml.jackson.databind.JavaType;
+import org.benbroadaway.unifi.actions.Util;
+import org.benbroadaway.unifi.actions.usp.GetRelayState;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.io.TempDir;
 import picocli.CommandLine;
 
 import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.io.PrintStream;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.fail;
@@ -69,6 +75,24 @@ public abstract class AbstractTest {
 
     protected void assertExitCode(int expected, int current) {
         assertEquals(expected, current, () -> "out:\n" + stdOut() + "\n\n" + "err:\n" + stdErr());
+    }
+
+    protected static <T> T resourceToObject(String resource, JavaType t) {
+        return resourceToInputStream(resource, is -> {
+            try {
+                return Util.withMapper(m -> m.readValue(is, t));
+            } catch (IOException e) {
+                throw new IllegalStateException("Error parsing resource to object", e);
+            }
+        });
+    }
+
+    protected static <T> T resourceToInputStream(String resource, Function<InputStream, T> f) {
+        try (var is = GetRelayState.class.getClassLoader().getResourceAsStream(resource)) {
+            return f.apply(is);
+        } catch (IOException e) {
+            throw new IllegalStateException("Error reading resource", e);
+        }
     }
 
     protected int run(List<String> args, Map<Class<?>, Object> mockCommands) {
