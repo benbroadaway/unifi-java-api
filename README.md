@@ -9,10 +9,10 @@ is limited to controlling single-plug USP devices.
 
 ## TODOs
 
-- [ ] verbose/debug option for more logging
+- [X] verbose/debug option for more logging
 - [ ] generate autocompletion with build/release
 - [ ] support for multi-plug USP devices
-- [ ] reorganize command hierarchy to make flags more intuitive (especially for autocompletion)
+- [X] reorganize command hierarchy to make flags more intuitive (especially for autocompletion)
 - [ ] support for more devices (ap, etc)
 - [ ] generic device support?
     - The (undocumented) REST API returns a _lot_ of

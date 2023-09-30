@@ -44,9 +44,9 @@ class DeviceTest extends AbstractTest {
                 "-c", "http://localhost"), Map.of(Device.class, new MockDevice("test", "test")));
 
         assertExitCode(0, exitCode);
-        assertLog("Model\\s+Device ID\\s+Name");
-        assertLog("UP1\\s+device_0\\s+test-usp-1");
-        assertLog("unknown\\s+device_1\\s+test-unknown-device-1");
+        assertLog(".*Model\\s+Device ID\\s+Name\\s+IP Addr.*");
+        assertLog(".*UP1\\s+device_0\\s+test-usp-1.*");
+        assertLog(".*unknown\\s+device_1\\s+test-unknown-device-1.*");
     }
 
     @Override

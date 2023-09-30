@@ -22,6 +22,9 @@ public interface UnifiDevice {
 
     @JsonProperty("name")
     String name();
+
+    @JsonProperty("ip")
+    String ip();
 }
 
 /*
