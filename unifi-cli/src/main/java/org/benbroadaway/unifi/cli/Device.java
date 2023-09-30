@@ -1,5 +1,6 @@
 package org.benbroadaway.unifi.cli;
 
+import org.benbroadaway.unifi.UnifiDevice;
 import org.benbroadaway.unifi.actions.ActionResult;
 import org.benbroadaway.unifi.actions.Util;
 import org.benbroadaway.unifi.actions.device.GetDevices;
@@ -12,8 +13,10 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.Callable;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 import static picocli.CommandLine.*;
@@ -74,14 +77,54 @@ public class Device implements Callable<Integer> {
         var devices = result.data()
                 .orElseThrow(() -> new IllegalStateException("No response!"));
 
-        String fmt = "%-10s%-25s%s";
-        log.info("{}", String.format(fmt, "Model", "Device ID", "Name"));
+
+        int modelWidth = longest(devices, 10, 20, UnifiDevice::model) + 2;
+        int deviceIdWidth = longestOptionalString(devices, 20, 25, UnifiDevice::deviceId) + 2;
+        int nameWidth = longest(devices, 20, 25, UnifiDevice::name) + 2;
+        int ipAddrWidth = longest(devices, 15, 15, UnifiDevice::ip) + 2;
+
+        var fmtNew = "%-10s%-" + deviceIdWidth + "s%-" + nameWidth + "s%-" + ipAddrWidth + "s";
+        log.info("{}", String.format(fmtNew, "Model", "Device ID", "Name", "IP Addr"));
 
         for (var d : devices) {
-            log.info("{}", String.format(fmt, d.model(), d.deviceId().orElse("n/a"), d.name()));
+            log.info("{}", String.format(fmtNew,
+                    truncate(d.model(), modelWidth - 2),
+                    truncate(d.deviceId().orElse("n/a"), deviceIdWidth - 2),
+                    truncate(d.name(), nameWidth - 2),
+                    truncate(d.ip(), ipAddrWidth - 2)));
         }
 
         return 0;
+    }
+
+    private String truncate(String s, int maxLen) {
+        if (s.length() <= maxLen) {
+            return s;
+        }
+
+        return s.substring(0, maxLen - 3) + "...";
+    }
+
+    private static int longestOptionalString(List<UnifiDevice> items, int atLeast, int noLongerThan, Function<UnifiDevice, Optional<String>> f) {
+        int max = items.stream()
+                .map(f)
+                .filter(Optional::isPresent)
+                .map(Optional::get)
+                .mapToInt(String::length)
+                .max()
+                .orElse(noLongerThan);
+
+        return Math.max(atLeast, Math.min(noLongerThan, max));
+    }
+
+    private static int longest(List<UnifiDevice> items, int atLeast, int noLongerThan, Function<UnifiDevice, String> f) {
+        int max = items.stream()
+                .map(f)
+                .mapToInt(String::length)
+                .max()
+                .orElse(noLongerThan);
+
+        return Math.max(atLeast, Math.min(noLongerThan, max));
     }
 
     public ApiCredentials getCredentials(CLIAuth cliAuth, Supplier<Model.CommandSpec> specSupplier) {
